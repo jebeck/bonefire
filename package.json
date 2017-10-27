@@ -13,6 +13,7 @@
   },
   "keywords": ["Jawbone", "Firebase", "Quantified", "Self"],
   "author": "Jana E. Beck",
+  "contributors": [{ "name": "Jana E. Beck" }],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/jebeck/bonefire/issues"
