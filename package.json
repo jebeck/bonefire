@@ -1,0 +1,22 @@
+{
+  "name": "bonefire",
+  "version": "0.1.0",
+  "description":
+    "A simple Node.js tool that fetches and uploads Jawbone UP data to a Firebase app.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jebeck/bonefire.git"
+  },
+  "keywords": ["Jawbone", "Firebase", "Quantified", "Self"],
+  "author": "Jana E. Beck",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jebeck/bonefire/issues"
+  },
+  "homepage": "https://github.com/jebeck/bonefire#readme",
+  "engines": { "node": ">=8" }
+}
