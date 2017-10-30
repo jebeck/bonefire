@@ -1,9 +1,8 @@
 {
   "name": "bonefire",
   "version": "0.1.0",
-  "description":
-    "A simple Node.js tool that fetches and uploads Jawbone UP data to a Firebase app.",
-  "main": "index.js",
+  "description": "A simple Node.js tool that fetches and uploads Jawbone UP data to a Firebase app.",
+  "main": "bonefire.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,13 +10,31 @@
     "type": "git",
     "url": "git+https://github.com/jebeck/bonefire.git"
   },
-  "keywords": ["Jawbone", "Firebase", "Quantified", "Self"],
+  "keywords": [
+    "Jawbone",
+    "Firebase",
+    "Quantified Self"
+  ],
   "author": "Jana E. Beck",
-  "contributors": [{ "name": "Jana E. Beck" }],
+  "contributors": [
+    {
+      "name": "Jana E. Beck"
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/jebeck/bonefire/issues"
   },
   "homepage": "https://github.com/jebeck/bonefire#readme",
-  "engines": { "node": ">=8" }
+  "engines": {
+    "node": ">=8"
+  },
+  "dependencies": {
+    "chalk": "2.3.0",
+    "firebase-admin": "5.4.3",
+    "javascript-state-machine": "3.0.1",
+    "lodash": "4.17.4",
+    "node-fetch": "1.7.3",
+    "yargs": "10.0.3"
+  }
 }
