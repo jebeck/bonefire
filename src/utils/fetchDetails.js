@@ -11,8 +11,8 @@ module.exports = function fetchDetails(type, xid) {
   })
     .then(checkStatus)
     .then(resp => resp.json())
-    .then(({ data }) => {
-      return { data, xid };
+    .then(({ data: { items } }) => {
+      return { data: items, xid };
     })
     .catch(err => {
       console.error(err);

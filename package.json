@@ -34,6 +34,7 @@
     "firebase-admin": "5.4.3",
     "javascript-state-machine": "3.0.1",
     "lodash": "4.17.4",
+    "moment": "2.19.1",
     "node-fetch": "1.7.3",
     "yargs": "10.0.3"
   }

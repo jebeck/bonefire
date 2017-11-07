@@ -18,6 +18,7 @@ module.exports = function fetchTopLevel(url) {
         xids.push(item.xid);
       });
       return {
+        summaries: data.items,
         xids,
         next: `https://jawbone.com${_.get(data, ['links', 'next'])}`,
       };
