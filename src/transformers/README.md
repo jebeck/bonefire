@@ -12,15 +12,16 @@ The high-resolution data provided at `/moves/:id/ticks` is what interests me mos
 {
   "type": "steps",
   "source": "jawbone",
-  "id": "a1b2c3",
-  "start": 0,
-  "end": 60000,
-  "timezone": "US/Pacific",
-  "value": 150
+  "id": <uuid (v4)>,
+  "parent": <jawbone daily steps summary xid>,
+  "start": <ISO 8601 Zulu datetime>,
+  "end": <ISO 8601 Zulu datetime>,
+  "timezone": <IANA timezone name>,
+  "value": <integer>
 }
 ```
 
-Both `start` and `end` here are hammertimes—that is, epoch timestamps with millisecond resolution (a simple conversion from the normal epoch timestamps returned by the Jawbone API). The `timezone` for each tick is determined via the `details.tzs` array provided on the top-level `/moves` objects summarizing each date (see next section). The step count itself is stored under `value` since the object already identifies its `type` as "steps." Finally, the `source` of the data ("jawbone") and the `jawboneId` are stored to provide data provenance and auditability.
+Both `start` and `end` here are [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601 'Wikipedia: ISO 8601')-formatted timestamps in Zulu/UTC. This is a conversion from the epoch timestamps the Jawbone API provides, but has the benefits of being both reliably string-sortable *and* human-readable. The `timezone` for each tick is determined via the `details.tzs` array provided on the top-level `/moves` objects summarizing each date (see next section). The step count itself is stored under `value` since the object already identifies its `type` as "steps." Finally, the `source` of the data ("jawbone") and the `xid` from the Jawbone daily summary are stored (the latter as `parent`) along with a generated uniqued identifier `id` to provide data provenance and auditability.
 
 #### summary by date
 
@@ -30,13 +31,13 @@ Jawbone has actually done a *great* job in their data model of summarizing steps
 {
   "type": "stepsSummary",
   "source": "jawbone",
-  "id": "a1b2c3",
-  "date": "2017-01-01",
-  "value": 7500,
-  "timezones": [[<hammertime>, <timezoneName>]],
-  "hourlyTotals": { 0: <steps> },
-  "timezone": <timezoneName>,
+  "id": <jawbone xid>,
+  "date": <ISO 8601 date>,
+  "value": <integer>,
+  "timezones": [{ "start": <ISO 8601 Zulu datetime>, "timezone": <IANA timezone name> }],
+  "hourlyTotals": { 0: <integer>, ..., 23: <integer> },
+  "timezone": <IANA timezone name>,
 }
 ```
 
-Here the summarized `date` is given in ISO 8601 format. The total steps for the summarized date is stored in `value`. The hourly breakdowns are given in an object with keys ranging from 0 to 23. Finally, Jawbone's determination of the primary `timezone` for the day and all applicable timezones (along with the hammertime of when that timezone was entered) are preserved in `timezone` and `timezones`, respectively.
+Here the summarized `date` is given in ISO 8601 format. The total steps for the summarized date is stored in `value`. The hourly breakdowns are given in an object with keys ranging from 0 to 23; only hours that have non-zero totals are included. Finally, Jawbone's determination of the primary `timezone` for the day and all applicable timezones (along with the ISO 8601 Zulu timestamp of when that timezone was entered) are preserved in `timezone` and `timezones`, respectively. Jawbone provides the `timezones` as an array of arrays, but the Cloud Firestore cannot store arrays of arrays, so I've converted the each array of arrays to an array of objects, each with `start` and `timezone` keys. I only include the `timezones` property when there *is* more than one timezone in the array.

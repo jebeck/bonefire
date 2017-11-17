@@ -15,6 +15,6 @@ module.exports = function fetchDetails(type, xid) {
       return { data: items, xid };
     })
     .catch(err => {
-      console.error(err);
+      throw new Error(err);
     });
 };
