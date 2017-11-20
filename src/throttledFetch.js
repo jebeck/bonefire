@@ -162,6 +162,7 @@ const FetchMachine = StateMachine.factory({
       return true;
     },
     onLeaveUploading: function(fsm) {
+      logger.debug(`Next URL is ${this.nextUrl}`);
       if (!this.nextUrl) {
         console.log(chalk`\n{grey DONE:} No next URL; finished! 😎\n`);
         logger.info('No next URL; finished!');
