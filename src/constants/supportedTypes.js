@@ -1,1 +1,1 @@
-module.exports = ['steps', 'sleeps', 'heartrates'];
+module.exports = ['sleeps', 'heartrates'];
