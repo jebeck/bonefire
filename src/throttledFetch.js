@@ -101,36 +101,6 @@ const FetchMachine = StateMachine.factory({
     },
     onProcess: function(fsm, data) {
       this.fetched = this.fetched.concat(data);
-      /** when number of fetches
-       * (i.e., fetched.length / 10 because of ?limit=10 on each fetch)
-       * is > the configured batchSize,
-       * dump data fetched so far to a JSON file and clear fetched */
-      if (this.fetched.length / 10 >= this.batchSize || !this.nextUrl) {
-        console.log();
-        console.log(
-          chalk`{grey STATE:} {grey ...dumping a batch of fetched data to JSON file...}`
-        );
-        const lastFetchedId = this.fetched[this.fetched.length - 1].xid;
-        logger.info(
-          `Dumping a batch of fetched data to JSON file: lastXid=${lastFetchedId}.json`
-        );
-        dumpJSONToFile(
-          this.fetched,
-          path.resolve(__dirname, `../data/lastXid=${lastFetchedId}.json`),
-          err => {
-            if (err) {
-              const errMsg = `Write file failed at ${this.fetched[
-                this.fetched.length - 1
-              ].xid} 😭`;
-              console.error(errMsg);
-              logger.error(errMsg);
-              process.exit(1);
-            }
-            this.fetched = [];
-            return;
-          }
-        );
-      }
       console.log();
       console.log(
         chalk`{grey # of XIDs fetched =} {yellow ${this.fetched.length}}`
@@ -267,12 +237,6 @@ exports.builder = yargs => {
       describe: `Jawbone datatype from: ${supportedTypes.join(', ')}`,
       type: 'string',
       choices: supportedTypes,
-    })
-    .option('batchSize', {
-      alias: 'b',
-      default: 100,
-      describe: 'Number of fetches to batch in JSON dumps',
-      type: 'number',
     })
     .option('interval', {
       alias: 'i',
