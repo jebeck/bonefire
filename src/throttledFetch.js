@@ -1,9 +1,11 @@
 const _ = require('lodash');
 const chalk = require('chalk');
+const admin = require('firebase-admin');
 const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
 const StateMachine = require('javascript-state-machine');
+const winston = require('winston');
 
 const dumpJSONToFile = require('./utils/dumpJSONToFile');
 const fetchDetails = require('./utils/fetchDetails');
@@ -11,6 +13,15 @@ const fetchTopLevel = require('./utils/fetchTopLevel');
 const makeJawboneUrl = require('./utils/makeJawboneUrl');
 const supportedTypes = require('./constants/supportedTypes');
 const uploadToCloudFirestore = require('./utils/uploadToCloudFirestore');
+
+const logger = winston.createLogger({
+  level: 'verbose',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.logstash()
+  ),
+  transports: [new winston.transports.File({ filename: 'bonefire.log' })],
+});
 
 const {
   processStepsSummaries,
@@ -62,18 +73,18 @@ const FetchMachine = StateMachine.factory({
     onFetch: async function(fsm) {
       console.log();
       console.log(chalk`{grey STATE:} {magenta fetching...}`);
-      let fetchUrl;
       try {
-        fetchUrl = JSON.parse(
+        this.fetchUrl = JSON.parse(
           fs.readFileSync(path.resolve(__dirname, '../next.json'))
         ).next;
       } catch (e) {
         if (e.message.search(/ENOENT: no such file or directory/) !== -1) {
-          fetchUrl = makeJawboneUrl(this.type);
+          this.fetchUrl = makeJawboneUrl(this.type);
         }
       }
-      console.log(chalk`{grey URL:} {underline ${fetchUrl}}`);
-      const { next, summaries, xids } = await fetchTopLevel(fetchUrl);
+      console.log(chalk`{grey URL:} {underline ${this.fetchUrl}}`);
+      logger.info(`Fetching ${this.fetchUrl}`);
+      const { next, summaries, xids } = await fetchTopLevel(this.fetchUrl);
       this.nextUrl = next;
       const ticks = await Promise.all(
         xids.map(fetchDetails.bind(null, this.type))
@@ -99,19 +110,21 @@ const FetchMachine = StateMachine.factory({
         console.log(
           chalk`{grey STATE:} {grey ...dumping a batch of fetched data to JSON file...}`
         );
+        const lastFetchedId = this.fetched[this.fetched.length - 1].xid;
+        logger.info(
+          `Dumping a batch of fetched data to JSON file: lastXid=${lastFetchedId}.json`
+        );
         dumpJSONToFile(
           this.fetched,
-          path.resolve(
-            __dirname,
-            `../data/lastXid=${this.fetched[this.fetched.length - 1].xid}.json`
-          ),
+          path.resolve(__dirname, `../data/lastXid=${lastFetchedId}.json`),
           err => {
             if (err) {
-              console.error(
-                `Write file failed at ${this.fetched[this.fetched.length - 1]
-                  .xid} 😭`
-              );
-              return process.exit(1);
+              const errMsg = `Write file failed at ${this.fetched[
+                this.fetched.length - 1
+              ].xid} 😭`;
+              console.error(errMsg);
+              logger.error(errMsg);
+              process.exit(1);
             }
             this.fetched = [];
             return;
@@ -124,6 +137,7 @@ const FetchMachine = StateMachine.factory({
       );
       console.log();
       console.log(chalk`{grey STATE:} {cyan processing...}`);
+      logger.info('Processing latest batch of fetched data...');
       const processed = [];
       /** here's where we're *actually* processing the data! */
       Object.keys(processorsByType[this.type]).forEach(key => {
@@ -137,10 +151,12 @@ const FetchMachine = StateMachine.factory({
     onUpload: async function(fsm, data) {
       console.log();
       console.log(chalk`{grey STATE:} {blue uploading...}`);
-      await Promise.all(uploadToCloudFirestore(data)).catch(err => {
+      logger.info('Uploading processed data to the Cloud Firestore...');
+      await Promise.all(uploadToCloudFirestore(this.db, data)).catch(err => {
         console.log(
           chalk`\n{grey ABORT:}💥  {red Error uploading }💥\n\n{grey MESSAGE:} {white ${err.message}}\n`
         );
+        logger.error(`Error uploading: ${err.message}`);
         process.exit(1);
       });
       return true;
@@ -148,6 +164,7 @@ const FetchMachine = StateMachine.factory({
     onLeaveUploading: function(fsm) {
       if (!this.nextUrl) {
         console.log(chalk`\n{grey DONE:} No next URL; finished! 😎\n`);
+        logger.info('No next URL; finished!');
         process.exit(0);
       }
       dumpJSONToFile(
@@ -155,8 +172,9 @@ const FetchMachine = StateMachine.factory({
         path.resolve(__dirname, `../next.json`),
         err => {
           if (err) {
-            console.error(`Failed to record next URL in a JSON dump 😭`);
-            return process.exit(1);
+            console.error('Failed to record next URL in a JSON dump 😭');
+            logger.error('Failed to record next URL in a JSON dump 😭');
+            process.exit(1);
           }
           this.nextUrl = null;
           return;
@@ -166,6 +184,7 @@ const FetchMachine = StateMachine.factory({
     onNext: function() {
       console.log();
       console.log(chalk`{grey STATE:} {green ready!}`);
+      logger.info('Ready for next set of fetches!');
     },
   },
 });
@@ -179,17 +198,35 @@ async function postFetch(fsm, data) {
 }
 
 exports.handler = async function throttledFetch({
+  account,
   batchSize,
+  databaseUrl,
   limit,
   interval,
   type,
 }) {
-  const fsm = new FetchMachine({ batchSize, fetched: [], nextUrl: null, type });
+  admin.initializeApp({
+    credential: admin.credential.cert(
+      require(path.resolve(__dirname, `../${account}`))
+    ),
+    databaseURL: databaseUrl,
+  });
+
+  const db = admin.firestore();
+  const fsm = new FetchMachine({
+    batchSize,
+    fetchUrl: null,
+    db,
+    fetched: [],
+    nextUrl: null,
+    type,
+  });
   let i = 1;
 
   const timer = setInterval(async function() {
     console.log();
     console.log(chalk`⏲️  {grey TICK} ⏲️`);
+    logger.verbose('Interval tick');
     if (fsm.is('ready')) {
       if (!limit || i < limit) {
         const data = await fsm.fetch();
@@ -200,11 +237,16 @@ exports.handler = async function throttledFetch({
         console.warn(
           chalk`\n{grey ABORT:} Exceeded configured fetch limit of ${limit}.\n`
         );
+        logger.warn(`Exceeded configured fetch limit of ${limit}`);
         process.exit(1);
       }
     } else {
       clearInterval(timer);
-      console.warn(`\nTimed out during ${next ? next : 'initial'} fetch 😢\n`);
+      const timeoutMsg = `Timed out during ${fsm.fetchUrl
+        ? fsm.fetchUrl
+        : 'initial'} fetch`;
+      console.warn(`\n${timeoutMsg}\n`);
+      logger.error(timeoutMsg);
       process.exit(1);
     }
   }, interval);
@@ -230,14 +272,26 @@ exports.builder = yargs => {
       describe: 'Number of fetches to batch in JSON dumps',
       type: 'number',
     })
+    .option('interval', {
+      alias: 'i',
+      default: 2e4,
+      describe: 'Interval between top-level fetches',
+    })
     .option('limit', {
       alias: 'l',
       describe: 'Stop after this many top-level fetches',
       type: 'number',
     })
-    .option('interval', {
-      alias: 'i',
-      default: 1e4,
-      describe: 'Interval between top-level fetches',
+    .option('account', {
+      alias: 'a',
+      demandOption: true,
+      describe: 'Path to Firebase service account JSON',
+      type: 'string',
+    })
+    .option('databaseUrl', {
+      alias: 'd',
+      demandOption: true,
+      describe: 'Cloud Firestore database URL',
+      type: 'string',
     });
 };

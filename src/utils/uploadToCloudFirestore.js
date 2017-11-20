@@ -1,16 +1,6 @@
 const _ = require('lodash');
-const admin = require('firebase-admin');
 
-const serviceAccount = require('../../jawbone-3fc6da7beabf.json');
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://jawbone-884b1.firebaseio.com',
-});
-
-const db = admin.firestore();
-
-module.exports = function uploadToCloudFirestore(uploads) {
+module.exports = function uploadToCloudFirestore(db, uploads) {
   const commits = [];
 
   uploads.forEach(({ collection, data }) => {

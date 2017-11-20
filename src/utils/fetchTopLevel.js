@@ -5,6 +5,11 @@ const checkStatus = require('./checkStatus');
 const supportedTypes = require('../constants/supportedTypes');
 
 module.exports = function fetchTopLevel(url) {
+  if (!process.env.JAWBONE_OAUTH_TOKEN) {
+    throw new Error('No JAWBONE_OAUTH_TOKEN present in env. Aborting!');
+    process.exit(1);
+  }
+
   return fetch(url, {
     headers: {
       Authorization: `Bearer ${process.env.JAWBONE_OAUTH_TOKEN}`,

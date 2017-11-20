@@ -1,3 +1,4 @@
 *.json
+*.log
 env.sh
 node_modules/
