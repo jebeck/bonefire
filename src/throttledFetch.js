@@ -265,6 +265,7 @@ exports.builder = yargs => {
     .positional('type', {
       describe: `Jawbone datatype from: ${supportedTypes.join(', ')}`,
       type: 'string',
+      choices: supportedTypes,
     })
     .option('batchSize', {
       alias: 'b',

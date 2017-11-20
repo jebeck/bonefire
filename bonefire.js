@@ -5,6 +5,7 @@ const yargs = require('yargs');
 yargs
   .usage('$0 <cmd> [args]')
   .command(require('./src/throttledFetch'))
+  .command(require('./src/count'))
   .help().argv;
 
 process.on('unhandledRejection', (reason, p) => {
