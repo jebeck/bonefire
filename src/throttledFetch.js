@@ -23,12 +23,22 @@ const logger = winston.createLogger({
   transports: [new winston.transports.File({ filename: 'bonefire.log' })],
 });
 
+const typesWithTicks = {
+  heartrates: false,
+  steps: true,
+};
+
+const { processHeartrates } = require('./transformers/heartrates');
+
 const {
   processStepsSummaries,
   processStepsTicks,
 } = require('./transformers/steps');
 
 const processorsByType = {
+  heartrates: {
+    data: processHeartrates,
+  },
   steps: {
     data: processStepsTicks,
     summaries: processStepsSummaries,
@@ -36,6 +46,9 @@ const processorsByType = {
 };
 
 const collectionsByType = {
+  heartrates: {
+    data: 'restingHeartrates',
+  },
   steps: {
     data: 'steps',
     summaries: 'stepsSummaries',
@@ -86,18 +99,22 @@ const FetchMachine = StateMachine.factory({
       logger.info(`Fetching ${this.fetchUrl}`);
       const { next, summaries, xids } = await fetchTopLevel(this.fetchUrl);
       this.nextUrl = next;
-      const ticks = await Promise.all(
-        xids.map(fetchDetails.bind(null, this.type))
-      );
-      /** combine top-level and high-resolution data by xid */
-      const data = summaries.map((summary, i) => {
-        const newSummary = { ...summary };
-        if (ticks[i].xid === summary.xid) {
-          newSummary.ticks = ticks[i].data || [];
-        }
-        return newSummary;
-      });
-      return data;
+      if (typesWithTicks[this.type]) {
+        const ticks = await Promise.all(
+          xids.map(fetchDetails.bind(null, this.type))
+        );
+        /** combine top-level and high-resolution data by xid */
+        const data = summaries.map((summary, i) => {
+          const newSummary = { ...summary };
+          if (ticks[i].xid === summary.xid) {
+            newSummary.ticks = ticks[i].data || [];
+          }
+          return newSummary;
+        });
+        return data;
+      } else {
+        return summaries;
+      }
     },
     onProcess: function(fsm, data) {
       this.fetched = this.fetched.concat(data);
@@ -213,9 +230,9 @@ exports.handler = async function throttledFetch({
       }
     } else {
       clearInterval(timer);
-      const timeoutMsg = `Timed out during ${fsm.fetchUrl
-        ? fsm.fetchUrl
-        : 'initial'} fetch`;
+      const timeoutMsg = `Timed out during ${
+        fsm.fetchUrl ? fsm.fetchUrl : 'initial'
+      } fetch`;
       console.warn(`\n${timeoutMsg}\n`);
       logger.error(timeoutMsg);
       process.exit(1);
