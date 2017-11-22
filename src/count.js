@@ -3,7 +3,7 @@ const path = require('path');
 
 const nefelionCollections = require('./constants/nefelionCollections');
 
-exports.handler = function({ account, databaseUrl, type }) {
+exports.handler = function({ account, databaseUrl, collection }) {
   admin.initializeApp({
     credential: admin.credential.cert(
       require(path.resolve(__dirname, `../${account}`))
@@ -14,26 +14,29 @@ exports.handler = function({ account, databaseUrl, type }) {
   const db = admin.firestore();
 
   db
-    .collection(type)
+    .collection(collection)
     .get()
     .then(snapshot => {
       let count = 0;
       snapshot.forEach(doc => {
         count++;
       });
-      console.log(`\n${count} items in collection <${type}>\b`);
+      console.log(`\n${count} items in collection <${collection}>\b`);
       process.exit(0);
     });
 };
 
-exports.command = 'count <type>';
+exports.command = 'count <collection>';
 
-exports.describe = 'count uploaded ☁️ nefelion data of a particular <type>';
+exports.describe =
+  'count uploaded ☁️ nefelion data in a particular <collection>';
 
 exports.builder = yargs => {
   return yargs
-    .positional('type', {
-      describe: `☁️ nefelion datatype from: ${nefelionCollections.join(', ')}`,
+    .positional('collection', {
+      describe: `☁️ nefelion collection from: ${nefelionCollections.join(
+        ', '
+      )}`,
       type: 'string',
       choices: nefelionCollections,
     })
