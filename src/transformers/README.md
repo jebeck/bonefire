@@ -34,6 +34,59 @@ or updated it. Thus, these values are just metadata and not that interesting or
 useful, so I've dropped them and preserved only the timezone-adjusted `date` of
 the resting heartrate measurement.
 
+### sleeps
+
+Like [steps](#steps), there are two endpoints for Jawbone UP's sleep data. The
+first at `/sleeps` provides in its `data.items` array high-level information
+about each sleep unit (overnight or a nap). Each "sleep" has an `xid`, and
+detailed sleep phase information about the sleep can be retrieve at
+`/sleeps/:id/ticks`. I'm interested in the most detailed sleep information
+possible, so I combine the results from both endpoints into the following data
+model for a unit of sleep:
+
+```json
+{
+  "type": "sleep",
+  "source": "jawbone",
+  "id": <jawbone xid>,
+  "date": <ISO 8601 date>,
+  "start": <ISO 8601 Zulu datetime>,
+  "end": <ISO 8601 Zulu datetime>,
+  "timezone": <IANA timezone name>,
+  "value": <duration in milliseconds>,
+  "awakenings": <integer>,
+  "awake": <duration in milliseconds>,
+  "deep": <duration in milliseconds>,
+  "light": <duration in milliseconds>,
+  "rem": <duration in milliseconds>,
+  "phases": [{ "start": <ISO 8601 Zulu datetime>, "phase": <'awake', 'light', or 'deep'>}]
+}
+```
+
+The `date` is the calender date of the sleep. Note that because both overnight
+sleeps and naps may be tracked, there may be more than one sleep per `date`! The
+`start` and `end` here correspond to the `asleep_time` and `awake_time` in the
+`details` of each sleep in the Jawbone data. `timezone` derives from
+`details.tz`. The `duration` of sleep in the Jawbone data provides the `value`
+in my data model, since the duration of a sleep unit is the most salient measure
+of it.
+
+The rest of the fields—`awakenings`, `awake`, `deep`, `light`, and `rem`—are
+also pulled directly from the sleep's `details` object.
+
+The `phases` derive from the `data.items` array at the high-resolution
+`/sleeps/:id/ticks` endpoint, but I transform Jawbone's numerical codes for the
+`phase` into string values that match the keys providing durations for each
+sleep phase in the overview-level `details` object, as according to
+[the documentation](https://jawbone.com/up/developer/endpoints/sleeps#sleep_phases "Jawbone UP Endpoints: sleep phases"):
+"1=awake, 2=light, 3=deep."
+
+There are a few values in the `details` of each sleep from the `/sleeps`
+endpoint that are unfortunately _not_ documented: `body` (🤔??), `sound`
+(probably a measure of ambient sound), and `quality`. I've chosen not to
+preserve any of these fields since I'm doubtful Jawbone will ever update their
+developer documentation, and I don't know precisely what they mean.
+
 ### steps
 
 #### high-resolution

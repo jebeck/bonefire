@@ -25,11 +25,12 @@ const logger = winston.createLogger({
 
 const typesWithTicks = {
   heartrates: false,
+  sleeps: true,
   steps: true,
 };
 
 const { processHeartrates } = require('./transformers/heartrates');
-
+const { processSleeps } = require('./transformers/sleeps');
 const {
   processStepsSummaries,
   processStepsTicks,
@@ -38,6 +39,9 @@ const {
 const processorsByType = {
   heartrates: {
     data: processHeartrates,
+  },
+  sleeps: {
+    data: processSleeps,
   },
   steps: {
     data: processStepsTicks,
@@ -48,6 +52,9 @@ const processorsByType = {
 const collectionsByType = {
   heartrates: {
     data: 'restingHeartrates',
+  },
+  sleeps: {
+    data: 'sleeps',
   },
   steps: {
     data: 'steps',
