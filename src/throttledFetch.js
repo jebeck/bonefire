@@ -157,7 +157,7 @@ const FetchMachine = StateMachine.factory({
     },
     onLeaveUploading: function(fsm) {
       logger.debug(`Next URL is ${this.nextUrl}`);
-      if (this.nextUrl === 'undefined') {
+      if (this.nextUrl.search('undefined') !== -1) {
         console.log(chalk`\n{grey DONE:} No next URL; finished! 😎\n`);
         logger.info('No next URL; finished!');
         process.exit(0);
