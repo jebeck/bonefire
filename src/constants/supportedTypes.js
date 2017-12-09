@@ -1,1 +1,1 @@
-module.exports = ['sleeps'];
+module.exports = ['timezone'];

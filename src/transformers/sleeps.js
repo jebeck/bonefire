@@ -33,7 +33,6 @@ module.exports = {
           phase: codesToPhaseName[tick.depth],
         })),
       };
-      console.log(reshaped);
 
       return reshaped;
     });

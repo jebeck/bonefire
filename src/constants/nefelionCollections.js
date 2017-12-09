@@ -1,1 +1,1 @@
-module.exports = ['restingHeartrates','steps', 'stepsSummaries'];
+module.exports = ['restingHeartrates', 'sleeps', 'steps', 'stepsSummaries'];
