@@ -5,6 +5,7 @@ const mapTypesToPaths = {
   sleeps: 'sleeps',
   steps: 'moves',
   heartrates: 'heartrates',
+  timezone: 'timezone',
 };
 
 module.exports = function makeJawboneUrl(type, level = null, xid = null) {
@@ -16,19 +17,23 @@ module.exports = function makeJawboneUrl(type, level = null, xid = null) {
         case 'details':
           return `${jawboneBaseUrl}/${mapTypesToPaths[type]}/${xid}/ticks`;
         default:
-          return `${jawboneBaseUrl}/${jawboneUserInfix}/${mapTypesToPaths[
-            type
-          ]}`;
+          return `${jawboneBaseUrl}/${jawboneUserInfix}/${
+            mapTypesToPaths[type]
+          }`;
       }
     case 'steps':
       switch (level) {
         case 'details':
           return `${jawboneBaseUrl}/${mapTypesToPaths[type]}/${xid}/ticks`;
         default:
-          return `${jawboneBaseUrl}/${jawboneUserInfix}/${mapTypesToPaths[
-            type
-          ]}`;
+          return `${jawboneBaseUrl}/${jawboneUserInfix}/${
+            mapTypesToPaths[type]
+          }`;
       }
+    case 'timezone':
+      return `${jawboneBaseUrl}/${jawboneUserInfix}/${
+        mapTypesToPaths[type]
+      }?start_time=0`;
     default:
       return null;
   }

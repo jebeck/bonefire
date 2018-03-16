@@ -35,6 +35,7 @@ const {
   processStepsSummaries,
   processStepsTicks,
 } = require('./transformers/steps');
+const { processTimezones } = require('./transformers/timezones');
 
 const processorsByType = {
   heartrates: {
@@ -46,6 +47,9 @@ const processorsByType = {
   steps: {
     data: processStepsTicks,
     summaries: processStepsSummaries,
+  },
+  timezone: {
+    data: processTimezones,
   },
 };
 
