@@ -2,19 +2,25 @@
 
 A simple Node.js tool that fetches and uploads Jawbone UP data to a Firebase app. (Because Jawbone UP is a dead product. Get your data out while you still can!)
 
+## installation and usage
+
+To start, you'll need [Node](https://nodejs.org/en/)
+
+<!-- TODO: redo installation and usage sections below with more detailed tutorial including install from npm instructions, getting token via Postman, etc. -->
+
 ## installation
 
-1. Clone this repository.
-1. Ensure you have `node` version 8.x and `npm` version 5.x installed.
-1. Install the project dependencies by running the command `npm install` in your Terminal program.
+1.  Clone this repository.
+1.  Ensure you have `node` version 8.x and `npm` version 5.x installed.
+1.  Install the project dependencies by running the command `npm install` in your Terminal program.
 
 ## usage
 
 The core command of this tool is `fetch`, and it takes one of the following `type`s:
 
-- `steps`
-- `sleeps`
-- `heartrates`
+* `steps`
+* `sleeps`
+* `heartrates`
 
 The following top-level documentation can also be viewed at any time by running `./bonefire.js --help`.
 
@@ -44,3 +50,9 @@ Options:
   --help          Show help                                            [boolean]
   --interval, -i                                                [default: 10000]
 ```
+
+## development
+
+1.  Clone this repository.
+1.  Ensure you have `node` version 8.x and `npm` version 5.x installed.
+1.  Install the project dependencies with `npm install` (or `yarn` if that's more your speed)
